@@ -55,9 +55,9 @@ func main() {
 	}
 
 	mux.Handle("/app/*", config.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(directoryPath)))))
-	mux.HandleFunc("/healthz", readinessHandler)
-	mux.HandleFunc("/metrics", config.metricsHandler)
-	mux.HandleFunc("/reset", config.resetHandler)
+	mux.HandleFunc("GET /api/healthz", readinessHandler)
+	mux.HandleFunc("GET /api/metrics", config.metricsHandler)
+	mux.HandleFunc("/api/reset", config.resetHandler)
 	log.Printf("Serving on port %s", port)
 
 	err := server.ListenAndServe()
