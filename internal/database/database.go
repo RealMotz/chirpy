@@ -2,17 +2,10 @@ package database
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"os"
-	"strconv"
 	"sync"
 )
-
-type Chirp struct {
-	Id   int    `json:"id"`
-	Body string `json:"body"`
-}
 
 type DataBase struct {
 	Name string
@@ -21,6 +14,7 @@ type DataBase struct {
 
 type DBData struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
 
 func (db *DataBase) Write(data DBData) {
@@ -39,6 +33,8 @@ func (db *DataBase) Write(data DBData) {
 }
 
 func (db *DataBase) Read() (DBData, error) {
+	db.CreateIfNotExits()
+
 	db.Mux.Lock()
 	defer db.Mux.Unlock()
 
@@ -60,67 +56,15 @@ func (db *DataBase) Read() (DBData, error) {
 	return dbData, nil
 }
 
-func (db *DataBase) GetChirps() ([]Chirp, error) {
-	dbData, err := db.Read()
-	if err != nil {
-		log.Printf("Cannot read database: %s", err)
-		return []Chirp{}, err
-	}
-
-	chirps := make([]Chirp, 0)
-	for _, chirp := range dbData.Chirps {
-		chirps = append(chirps, chirp)
-	}
-
-	return chirps, nil
-}
-
-func (db *DataBase) GetChirp(id string) (Chirp, error) {
-	dbData, err := db.Read()
-	if err != nil {
-		log.Printf("Cannot read database: %s", err)
-		return Chirp{}, err
-	}
-	chirpId, err := strconv.Atoi(id)
-	if err != nil {
-		log.Printf("Id not valid: %s", err)
-		return Chirp{}, err
-	}
-	if chirp, ok := dbData.Chirps[chirpId]; ok {
-		return chirp, nil
-	}
-
-	return Chirp{}, errors.New("Chirp not found")
-}
-
-func (db *DataBase) CreateChirp(body string) (Chirp, error) {
-	chirps, err := db.Read()
-	if err != nil {
-		log.Fatal(err)
-		return Chirp{}, err
-	}
-
-	newId := len(chirps.Chirps) + 1
-	newChirp := Chirp{
-		Id:   newId,
-		Body: body,
-	}
-
-	chirps.Chirps[newId] = newChirp
-	db.Write(chirps)
-	return newChirp, nil
-}
-
-func (db *DataBase) CreateIfNotExits() error {
-	fileInfo, err := os.Stat(db.Name)
+func (db *DataBase) CreateIfNotExits() {
+	_, err := os.Stat(db.Name)
 	if err == nil {
-		db.Name = fileInfo.Name()
-		return nil
+		return
 	}
 
 	dbStructure := DBData{
 		Chirps: map[int]Chirp{},
+		Users:  map[int]User{},
 	}
 	db.Write(dbStructure)
-	return nil
 }

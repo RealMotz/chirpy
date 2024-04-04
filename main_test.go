@@ -1,8 +1,11 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-func TestCleanBod(t *testing.T) {
+func TestCleanBody(t *testing.T) {
 	t.Run("Test case # 1", func(t *testing.T) {
 		const body = "This is a kerfuffle opinion I need to share with the world"
 		const expected = "This is a **** opinion I need to share with the world"
@@ -31,4 +34,24 @@ func TestCleanBod(t *testing.T) {
 			t.Errorf("Actual: %s", actual)
 		}
 	})
+}
+
+func TestIsEmailValid(t *testing.T) {
+	expected := []bool{true, true, true, false, false, false}
+	for i, email := range []string{
+		"good@example.com",
+		"good@example2.com   ",
+		"   good@example3.com",
+		"bad-example",
+		"bad_example",
+		"12345",
+	} {
+		t.Run(fmt.Sprintf("Test case # %d", i), func(t *testing.T) {
+			actual := isEmailValid(email)
+			if actual != expected[i] {
+				t.Errorf("Expected: %t", expected)
+				t.Errorf("Actual: %t", actual)
+			}
+		})
+	}
 }

@@ -24,12 +24,6 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cfg.db.CreateIfNotExits()
-	if err != nil {
-		handleErrorResponse(w, http.StatusInternalServerError, err)
-		return
-	}
-
 	chirp, err := cfg.db.CreateChirp(cleanBody(decodedChirp.Body))
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
