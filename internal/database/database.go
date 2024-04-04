@@ -2,8 +2,10 @@ package database
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -61,7 +63,7 @@ func (db *DataBase) Read() (DBData, error) {
 func (db *DataBase) GetChirps() ([]Chirp, error) {
 	dbData, err := db.Read()
 	if err != nil {
-		log.Printf("Cannot get chirps: %s", err)
+		log.Printf("Cannot read database: %s", err)
 		return []Chirp{}, err
 	}
 
@@ -71,6 +73,24 @@ func (db *DataBase) GetChirps() ([]Chirp, error) {
 	}
 
 	return chirps, nil
+}
+
+func (db *DataBase) GetChirp(id string) (Chirp, error) {
+	dbData, err := db.Read()
+	if err != nil {
+		log.Printf("Cannot read database: %s", err)
+		return Chirp{}, err
+	}
+	chirpId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Printf("Id not valid: %s", err)
+		return Chirp{}, err
+	}
+	if chirp, ok := dbData.Chirps[chirpId]; ok {
+		return chirp, nil
+	}
+
+	return Chirp{}, errors.New("Chirp not found")
 }
 
 func (db *DataBase) CreateChirp(body string) (Chirp, error) {
@@ -98,17 +118,9 @@ func (db *DataBase) CreateIfNotExits() error {
 		return nil
 	}
 
-	file, err := os.Create(db.Name)
-	if err != nil {
-		return err
+	dbStructure := DBData{
+		Chirps: map[int]Chirp{},
 	}
-	db.Name = file.Name()
-
-	err = os.WriteFile(db.Name, []byte("{\"chirps\": {}}"), 0666)
-	if err != nil {
-		log.Printf("Error initializing file: %s", err)
-		return err
-	}
-
+	db.Write(dbStructure)
 	return nil
 }
