@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/mail"
 	"strings"
 
 	"github.com/RealMotz/chirpy/internal/database"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
@@ -18,19 +20,25 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trimmedEmail := strings.Trim(decodedUser.Email, " ")
-
-	if !isEmailValid(trimmedEmail) {
+	email := strings.Trim(decodedUser.Email, " ")
+	if !isEmailValid(email) {
 		handleErrorResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
-	chirp, err := cfg.db.CreateUser(trimmedEmail)
+	pwd, err := bcrypt.GenerateFromPassword([]byte(decodedUser.Password), 10)
 	if err != nil {
+		log.Printf("Error processing password: %v", err)
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	handleJsonResponse(w, http.StatusCreated, chirp)
+
+	user, userErr := cfg.db.CreateUser(email, pwd)
+	if userErr.Error != nil {
+		handleErrorResponse(w, userErr.Code, userErr.Error)
+		return
+	}
+	handleJsonResponse(w, http.StatusCreated, user)
 }
 
 func isEmailValid(email string) bool {

@@ -55,6 +55,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{id}", config.getChirp)
 	mux.HandleFunc("POST /api/chirps", config.createChirp)
 	mux.HandleFunc("POST /api/users", config.createUser)
+	mux.HandleFunc("POST /api/login", config.login)
 	log.Printf("Serving on port %s", port)
 
 	err := server.ListenAndServe()
