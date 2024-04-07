@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 )
@@ -47,7 +48,7 @@ func (db *DataBase) GetChirp(id string) (Chirp, error) {
 func (db *DataBase) CreateChirp(body string) (Chirp, error) {
 	dbData, err := db.Read()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error creating chirp: %s", err)
 		return Chirp{}, err
 	}
 

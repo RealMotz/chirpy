@@ -28,6 +28,7 @@ func (db *DataBase) Write(data DBData) {
 	}
 	err = os.WriteFile(db.Name, encodedData, 0666)
 	if err != nil {
+		log.Printf("error writing file")
 		log.Fatal(err)
 	}
 }
@@ -41,7 +42,6 @@ func (db *DataBase) Read() (DBData, error) {
 	data, err := os.ReadFile(db.Name)
 	if err != nil {
 		log.Printf("error reading file")
-		log.Fatal(err)
 		return DBData{}, err
 	}
 
@@ -49,7 +49,6 @@ func (db *DataBase) Read() (DBData, error) {
 	err = json.Unmarshal(data, &dbData)
 	if err != nil {
 		log.Printf("error unmarshaling file")
-		log.Fatal(err)
 		return DBData{}, err
 	}
 

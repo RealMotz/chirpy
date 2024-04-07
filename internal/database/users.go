@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +18,7 @@ type UserResponse struct {
 	Email string `json:"email"`
 }
 
-type UserError struct {
+type HttpError struct {
 	Error error
 	Code  int
 }
@@ -27,7 +26,6 @@ type UserError struct {
 func (db *DataBase) GetUser(email string, pwd []byte) (UserResponse, error) {
 	dbData, err := db.Read()
 	if err != nil {
-		log.Fatal(err)
 		return UserResponse{}, err
 	}
 
@@ -47,11 +45,29 @@ func (db *DataBase) GetUser(email string, pwd []byte) (UserResponse, error) {
 	}, nil
 }
 
-func (db *DataBase) CreateUser(email string, pwd []byte) (UserResponse, UserError) {
+func (db *DataBase) UpdateUser(user User) (UserResponse, HttpError) {
 	dbData, err := db.Read()
 	if err != nil {
-		log.Fatal(err)
-		return UserResponse{}, UserError{
+		return UserResponse{}, HttpError{
+			Error: err,
+			Code:  http.StatusInternalServerError,
+		}
+	}
+
+	dbData.Users[user.Id] = user
+	db.Write(dbData)
+	return UserResponse{
+			Id:    user.Id,
+			Email: user.Email,
+		}, HttpError{
+			Error: nil,
+		}
+}
+
+func (db *DataBase) CreateUser(email string, pwd string) (UserResponse, HttpError) {
+	dbData, err := db.Read()
+	if err != nil {
+		return UserResponse{}, HttpError{
 			Error: err,
 			Code:  http.StatusInternalServerError,
 		}
@@ -59,7 +75,7 @@ func (db *DataBase) CreateUser(email string, pwd []byte) (UserResponse, UserErro
 
 	user := getUserByEmail(email, dbData.Users)
 	if user != nil {
-		return UserResponse{}, UserError{
+		return UserResponse{}, HttpError{
 			Error: errors.New("email already exists"),
 			Code:  http.StatusConflict,
 		}
@@ -69,13 +85,13 @@ func (db *DataBase) CreateUser(email string, pwd []byte) (UserResponse, UserErro
 	dbData.Users[newId] = User{
 		Id:       newId,
 		Email:    email,
-		Password: string(pwd),
+		Password: pwd,
 	}
 	db.Write(dbData)
 	return UserResponse{
 			Id:    newId,
 			Email: email,
-		}, UserError{
+		}, HttpError{
 			Error: nil,
 		}
 }

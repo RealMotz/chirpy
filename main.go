@@ -8,14 +8,21 @@ import (
 	"sync"
 
 	"github.com/RealMotz/chirpy/internal/database"
+	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits int
 	db             database.DataBase
+	jwtSecret      []byte
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+		return
+	}
 	debug := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
 
@@ -25,12 +32,14 @@ func main() {
 	crsMux := middlewareCors(mux)
 
 	var mtx sync.RWMutex
+	jwtSecret := os.Getenv("JWT_SECRET")
 	config := apiConfig{
 		fileserverHits: 0,
 		db: database.DataBase{
 			Name: "database.json",
 			Mux:  &mtx,
 		},
+		jwtSecret: []byte(jwtSecret),
 	}
 
 	if *debug {
@@ -55,10 +64,11 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{id}", config.getChirp)
 	mux.HandleFunc("POST /api/chirps", config.createChirp)
 	mux.HandleFunc("POST /api/users", config.createUser)
+	mux.HandleFunc("PUT /api/users", config.updateUser)
 	mux.HandleFunc("POST /api/login", config.login)
 	log.Printf("Serving on port %s", port)
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
