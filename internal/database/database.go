@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 type DataBase struct {
@@ -13,8 +14,9 @@ type DataBase struct {
 }
 
 type DBData struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps map[int]Chirp        `json:"chirps"`
+	Users  map[int]User         `json:"users"`
+	Tokens map[string]time.Time `json:"tokens"`
 }
 
 func (db *DataBase) Write(data DBData) {
@@ -64,6 +66,7 @@ func (db *DataBase) CreateIfNotExits() {
 	dbStructure := DBData{
 		Chirps: map[int]Chirp{},
 		Users:  map[int]User{},
+		Tokens: map[string]time.Time{},
 	}
 	db.Write(dbStructure)
 }

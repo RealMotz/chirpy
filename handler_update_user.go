@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,9 +25,21 @@ func (cfg *apiConfig) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	issuer, err := parsedToken.Claims.GetIssuer()
+	if err != nil {
+		fmt.Printf("Error retrieving jwt issuer")
+		handleErrorResponse(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if issuer == RefreshToken.String() {
+		handleErrorResponse(w, http.StatusUnauthorized, errors.New("invalid token"))
+		return
+	}
+
 	userId, err := parsedToken.Claims.GetSubject()
 	if err != nil {
-		fmt.Printf("Error parsing jwt token")
+		fmt.Printf("Error retrieving jwt subject")
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
 	}

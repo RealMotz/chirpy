@@ -64,8 +64,11 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{id}", config.getChirp)
 	mux.HandleFunc("POST /api/chirps", config.createChirp)
 	mux.HandleFunc("POST /api/users", config.createUser)
-	mux.HandleFunc("PUT /api/users", config.updateUser)
+
 	mux.HandleFunc("POST /api/login", config.login)
+	mux.HandleFunc("PUT /api/users", config.updateUser)
+	mux.HandleFunc("POST /api/refresh", config.refreshLoginToken)
+	mux.HandleFunc("POST /api/revoke", config.revokeLoginToken)
 	log.Printf("Serving on port %s", port)
 
 	err = server.ListenAndServe()

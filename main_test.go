@@ -47,7 +47,7 @@ func TestIsEmailValid(t *testing.T) {
 		"12345",
 	} {
 		t.Run(fmt.Sprintf("Test case # %d", i), func(t *testing.T) {
-			actual := isEmailValid(email)
+			actual := IsEmailValid(email)
 			if actual != expected[i] {
 				t.Errorf("Expected: %t", expected)
 				t.Errorf("Actual: %t", actual)
