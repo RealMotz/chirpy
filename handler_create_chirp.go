@@ -6,13 +6,38 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/RealMotz/chirpy/internal/auth"
 	"github.com/RealMotz/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	parsedToken, err := cfg.parseToken(token)
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	err = cfg.verifyIssuer(parsedToken, auth.AccessToken.String())
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	authorId, err := cfg.getSubject(parsedToken)
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	decodedChirp := database.Chirp{}
-	err := decoder.Decode(&decodedChirp)
+	err = decoder.Decode(&decodedChirp)
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -24,7 +49,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chirp, err := cfg.db.CreateChirp(cleanBody(decodedChirp.Body))
+	chirp, err := cfg.db.CreateChirp(cleanBody(decodedChirp.Body), authorId)
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return

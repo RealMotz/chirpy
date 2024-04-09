@@ -57,16 +57,20 @@ func main() {
 			http.StripPrefix("/app", http.FileServer(http.Dir(directoryPath))),
 		),
 	)
-	mux.HandleFunc("/api/reset", config.resetHandler)
-	mux.HandleFunc("GET /api/healthz", readinessHandler)
 	mux.HandleFunc("GET /admin/metrics", config.metricsHandler)
+
+	mux.HandleFunc("GET /api/reset", config.resetHandler)
+	mux.HandleFunc("GET /api/healthz", readinessHandler)
+
 	mux.HandleFunc("GET /api/chirps", config.getChirps)
 	mux.HandleFunc("GET /api/chirps/{id}", config.getChirp)
 	mux.HandleFunc("POST /api/chirps", config.createChirp)
+	mux.HandleFunc("DELETE /api/chirps/{id}", config.deleteChirp)
+
 	mux.HandleFunc("POST /api/users", config.createUser)
+	mux.HandleFunc("PUT /api/users", config.updateUser)
 
 	mux.HandleFunc("POST /api/login", config.login)
-	mux.HandleFunc("PUT /api/users", config.updateUser)
 	mux.HandleFunc("POST /api/refresh", config.refreshLoginToken)
 	mux.HandleFunc("POST /api/revoke", config.revokeLoginToken)
 	log.Printf("Serving on port %s", port)

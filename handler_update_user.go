@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/RealMotz/chirpy/internal/auth"
 	"github.com/RealMotz/chirpy/internal/database"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -32,7 +33,7 @@ func (cfg *apiConfig) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if issuer == RefreshToken.String() {
+	if issuer == auth.RefreshToken.String() {
 		handleErrorResponse(w, http.StatusUnauthorized, errors.New("invalid token"))
 		return
 	}

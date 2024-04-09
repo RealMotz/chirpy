@@ -6,39 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/RealMotz/chirpy/internal/auth"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type AuthRequest struct {
-	Password         string `json:"password"`
-	Email            string `json:"email"`
-	ExpiresInSeconds int    `json:"expires_in_seconds"`
-}
-
-type AuthResponse struct {
-	Id           int    `json:"id"`
-	Email        string `json:"email"`
-	Token        string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type TokenType int
-
-const (
-	RefreshToken TokenType = iota + 1
-	AccessToken
-)
-
-func (i TokenType) String() string {
-	return [...]string{"chirpy-refresh", "chirpy-access"}[i-1]
-}
-
 func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	req := AuthRequest{}
+	req := auth.AuthRequest{}
 	err := decoder.Decode(&req)
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
@@ -51,19 +27,19 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := cfg.createToken(AccessToken.String(), user.Id, time.Duration(time.Hour))
+	accessToken, err := cfg.createToken(auth.AccessToken.String(), user.Id, time.Duration(time.Hour))
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 	oneDay := time.Duration(time.Hour * 24 * 60)
-	refreshToken, err := cfg.createToken(RefreshToken.String(), user.Id, oneDay)
+	refreshToken, err := cfg.createToken(auth.RefreshToken.String(), user.Id, oneDay)
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	handleJsonResponse(w, http.StatusOK, AuthResponse{
+	handleJsonResponse(w, http.StatusOK, auth.AuthResponse{
 		Id:           user.Id,
 		Email:        user.Email,
 		Token:        accessToken,
@@ -91,13 +67,11 @@ func (cfg *apiConfig) createToken(issuerName string, subject int, expiration tim
 }
 
 func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) {
-	auth := r.Header.Get("Authorization")
-	splitAuth := strings.Split(auth, " ")
-	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
-		handleErrorResponse(w, http.StatusUnauthorized, errors.New("malformed authorization header"))
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
 	}
-	token := splitAuth[1]
 
 	parsedToken, err := cfg.parseToken(token)
 	if err != nil {
@@ -105,7 +79,7 @@ func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = cfg.verifyIssuer(parsedToken, RefreshToken.String())
+	err = cfg.verifyIssuer(parsedToken, auth.RefreshToken.String())
 	if err != nil {
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
@@ -123,7 +97,7 @@ func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	accessToken, err := cfg.createToken(AccessToken.String(), id, time.Duration(time.Hour))
+	accessToken, err := cfg.createToken(auth.AccessToken.String(), id, time.Duration(time.Hour))
 	if err != nil {
 		handleErrorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -139,13 +113,11 @@ func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *apiConfig) revokeLoginToken(w http.ResponseWriter, r *http.Request) {
-	auth := r.Header.Get("Authorization")
-	splitAuth := strings.Split(auth, " ")
-	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
-		handleErrorResponse(w, http.StatusUnauthorized, errors.New("malformed authorization header"))
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	if err != nil {
+		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
 	}
-	token := splitAuth[1]
 
 	parsedToken, err := cfg.parseToken(token)
 	if err != nil {
@@ -153,7 +125,7 @@ func (cfg *apiConfig) revokeLoginToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cfg.verifyIssuer(parsedToken, RefreshToken.String())
+	err = cfg.verifyIssuer(parsedToken, auth.RefreshToken.String())
 	if err != nil {
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return

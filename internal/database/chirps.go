@@ -2,15 +2,17 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 )
 
 type Chirp struct {
-	Id   int    `json:"id"`
-	Body string `json:"body"`
+	Id       int    `json:"id"`
+	Body     string `json:"body"`
+	AuthorId int    `json:"author_id"`
 }
+
+var ErrorChirpNotFound = errors.New("chirp not found")
 
 func (db *DataBase) GetChirps() ([]Chirp, error) {
 	dbData, err := db.Read()
@@ -38,27 +40,49 @@ func (db *DataBase) GetChirp(id string) (Chirp, error) {
 		log.Printf("Id not valid: %s", err)
 		return Chirp{}, err
 	}
-	if chirp, ok := dbData.Chirps[chirpId]; ok {
-		return chirp, nil
+
+	chirp, ok := dbData.Chirps[chirpId]
+	if !ok {
+		return Chirp{}, ErrorChirpNotFound
 	}
 
-	return Chirp{}, errors.New("Chirp not found")
+	return chirp, nil
 }
 
-func (db *DataBase) CreateChirp(body string) (Chirp, error) {
+func (db *DataBase) CreateChirp(body string, authorId int) (Chirp, error) {
 	dbData, err := db.Read()
 	if err != nil {
-		fmt.Printf("error creating chirp: %s", err)
 		return Chirp{}, err
 	}
 
 	newId := len(dbData.Chirps) + 1
 	chirp := Chirp{
-		Id:   newId,
-		Body: body,
+		Id:       newId,
+		Body:     body,
+		AuthorId: authorId,
 	}
 
 	dbData.Chirps[newId] = chirp
 	db.Write(dbData)
 	return chirp, nil
+}
+
+func (db *DataBase) DeleteChirp(id string) error {
+	dbData, err := db.Read()
+	if err != nil {
+		return err
+	}
+
+	chirpId, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := dbData.Chirps[chirpId]; !ok {
+		return ErrorChirpNotFound
+	}
+
+	delete(dbData.Chirps, chirpId)
+	db.Write(dbData)
+	return nil
 }
