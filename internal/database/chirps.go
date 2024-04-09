@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 	"log"
+	"sort"
 	"strconv"
 )
 
@@ -14,7 +15,7 @@ type Chirp struct {
 
 var ErrorChirpNotFound = errors.New("chirp not found")
 
-func (db *DataBase) GetChirps() ([]Chirp, error) {
+func (db *DataBase) GetChirps(authorId int, descSort bool) ([]Chirp, error) {
 	dbData, err := db.Read()
 	if err != nil {
 		log.Printf("Cannot read database: %s", err)
@@ -23,9 +24,23 @@ func (db *DataBase) GetChirps() ([]Chirp, error) {
 
 	chirps := make([]Chirp, 0)
 	for _, chirp := range dbData.Chirps {
+		if authorId != 0 {
+			if chirp.AuthorId == authorId {
+				chirps = append(chirps, chirp)
+			}
+			continue
+		}
 		chirps = append(chirps, chirp)
 	}
 
+	sort.Slice(chirps, func(i, j int) bool {
+		if descSort {
+			return chirps[i].Id > chirps[j].Id
+		} else {
+			return chirps[i].Id < chirps[j].Id
+
+		}
+	})
 	return chirps, nil
 }
 
