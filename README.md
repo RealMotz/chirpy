@@ -22,3 +22,7 @@ Twitter server clone for study purposes. None of the features are intended to be
 ```go
 go install github.com/RealMotz/chirpy
 ```
+Inside a go module:
+```go
+go get github.com/RealMotz/chirpy
+```
