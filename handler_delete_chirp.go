@@ -9,7 +9,7 @@ import (
 
 func (cfg *apiConfig) deleteChirp(w http.ResponseWriter, r *http.Request) {
 	// authenticate the user
-	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"), "Bearer")
 	if err != nil {
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return

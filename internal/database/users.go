@@ -8,14 +8,16 @@ import (
 )
 
 type User struct {
-	Id       int    `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Id         int    `json:"id"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	IsChirpRed bool   `json:"is_chirp_red"`
 }
 
 type UserResponse struct {
-	Id    int    `json:"id"`
-	Email string `json:"email"`
+	Id         int    `json:"id"`
+	Email      string `json:"email"`
+	IsChirpRed bool   `json:"is_chirpy_red"`
 }
 
 type HttpError struct {
@@ -40,8 +42,9 @@ func (db *DataBase) GetUser(email string, pwd []byte) (UserResponse, error) {
 	}
 
 	return UserResponse{
-		Id:    user.Id,
-		Email: user.Email,
+		Id:         user.Id,
+		Email:      user.Email,
+		IsChirpRed: user.IsChirpRed,
 	}, nil
 }
 
@@ -57,8 +60,9 @@ func (db *DataBase) UpdateUser(user User) (UserResponse, HttpError) {
 	dbData.Users[user.Id] = user
 	db.Write(dbData)
 	return UserResponse{
-			Id:    user.Id,
-			Email: user.Email,
+			Id:         user.Id,
+			Email:      user.Email,
+			IsChirpRed: user.IsChirpRed,
 		}, HttpError{
 			Error: nil,
 		}
@@ -83,14 +87,16 @@ func (db *DataBase) CreateUser(email string, pwd string) (UserResponse, HttpErro
 
 	newId := len(dbData.Users) + 1
 	dbData.Users[newId] = User{
-		Id:       newId,
-		Email:    email,
-		Password: pwd,
+		Id:         newId,
+		Email:      email,
+		Password:   pwd,
+		IsChirpRed: false,
 	}
 	db.Write(dbData)
 	return UserResponse{
-			Id:    newId,
-			Email: email,
+			Id:         newId,
+			Email:      email,
+			IsChirpRed: false,
 		}, HttpError{
 			Error: nil,
 		}

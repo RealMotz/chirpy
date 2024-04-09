@@ -43,6 +43,7 @@ func (cfg *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		Id:           user.Id,
 		Email:        user.Email,
 		Token:        accessToken,
+		IsChirpRed:   user.IsChirpRed,
 		RefreshToken: refreshToken,
 	})
 }
@@ -67,7 +68,7 @@ func (cfg *apiConfig) createToken(issuerName string, subject int, expiration tim
 }
 
 func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"), "Bearer")
 	if err != nil {
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
@@ -113,7 +114,7 @@ func (cfg *apiConfig) refreshLoginToken(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *apiConfig) revokeLoginToken(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"))
+	token, err := auth.FetchAuthHeader(r.Header.Get("Authorization"), "Bearer")
 	if err != nil {
 		handleErrorResponse(w, http.StatusUnauthorized, err)
 		return
@@ -145,7 +146,7 @@ func (cfg *apiConfig) parseToken(token string) (*jwt.Token, error) {
 		return cfg.jwtSecret, nil
 	})
 	if err != nil {
-		fmt.Printf("Error parsing jwt token")
+		fmt.Printf("error parsing jwt token")
 		return &jwt.Token{}, err
 	}
 
@@ -169,13 +170,13 @@ func (cfg *apiConfig) verifyIssuer(token *jwt.Token, tokenIssuer string) error {
 func (cfg *apiConfig) getSubject(token *jwt.Token) (int, error) {
 	subject, err := token.Claims.GetSubject()
 	if err != nil {
-		fmt.Printf("Error retrieving jwt subject")
+		fmt.Printf("error retrieving jwt subject")
 		return 0, err
 	}
 
 	parsedSubject, err := strconv.Atoi(subject)
 	if err != nil {
-		fmt.Printf("Error parsing jwt subject")
+		fmt.Printf("error parsing jwt subject")
 		return 0, err
 	}
 

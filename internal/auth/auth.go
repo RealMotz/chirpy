@@ -14,6 +14,7 @@ type AuthRequest struct {
 type AuthResponse struct {
 	Id           int    `json:"id"`
 	Email        string `json:"email"`
+	IsChirpRed   bool   `json:"is_chirpy_red"`
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
 }
@@ -31,9 +32,9 @@ func (i TokenType) String() string {
 	return [...]string{"chirpy-refresh", "chirpy-access"}[i-1]
 }
 
-func FetchAuthHeader(header string) (string, error) {
+func FetchAuthHeader(header string, authKey string) (string, error) {
 	splitAuth := strings.Split(header, " ")
-	if len(splitAuth) < 2 || splitAuth[0] != "Bearer" {
+	if len(splitAuth) < 2 || splitAuth[0] != authKey {
 		return "", ErrorInvalidAuthHeader
 	}
 	return splitAuth[1], nil

@@ -15,6 +15,7 @@ type apiConfig struct {
 	fileserverHits int
 	db             database.DataBase
 	jwtSecret      []byte
+	polkaApiKey    []byte
 }
 
 func main() {
@@ -33,13 +34,15 @@ func main() {
 
 	var mtx sync.RWMutex
 	jwtSecret := os.Getenv("JWT_SECRET")
+	polkaApiKey := os.Getenv("POLKA_API_KEY")
 	config := apiConfig{
 		fileserverHits: 0,
 		db: database.DataBase{
 			Name: "database.json",
 			Mux:  &mtx,
 		},
-		jwtSecret: []byte(jwtSecret),
+		jwtSecret:   []byte(jwtSecret),
+		polkaApiKey: []byte(polkaApiKey),
 	}
 
 	if *debug {
@@ -73,6 +76,8 @@ func main() {
 	mux.HandleFunc("POST /api/login", config.login)
 	mux.HandleFunc("POST /api/refresh", config.refreshLoginToken)
 	mux.HandleFunc("POST /api/revoke", config.revokeLoginToken)
+
+	mux.HandleFunc("POST /api/polka/webhooks", config.webhooks)
 	log.Printf("Serving on port %s", port)
 
 	err = server.ListenAndServe()
